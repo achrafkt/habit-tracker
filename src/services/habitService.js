@@ -55,7 +55,7 @@ const habitService = {
   toggleCompletion: async (id, date = null) => {
     try {
       const response = await api.post(`/habits/${id}/toggle`, {
-        completed_at: date || new Date().toISOString().split('T')[0],
+        date: date || new Date().toISOString().split('T')[0],
       });
       return response.data.data || response.data;
     } catch (error) {

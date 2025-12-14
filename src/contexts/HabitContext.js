@@ -159,14 +159,37 @@ export const HabitProvider = ({ children }) => {
 
   const toggleCompletion = async (id) => {
     try {
+      const habit = habits.find(h => h.id === id);
+      if (!habit) return;
+
       let updated;
       if (isAuthenticated && !id.toString().startsWith('local-')) {
         try {
-          updated = await habitService.toggleCompletion(id);
+          const apiResponse = await habitService.toggleCompletion(id);
+          // API returns completion info, not full habit - need to update locally
+          const today = dayjs().format('YYYY-MM-DD');
+          
+          if (apiResponse.completed) {
+            // Added completion
+            updated = {
+              ...habit,
+              completions: [
+                ...(habit.completions || []),
+                apiResponse.completion || { completed_at: today }
+              ],
+            };
+          } else {
+            // Removed completion
+            updated = {
+              ...habit,
+              completions: (habit.completions || []).filter(c => 
+                dayjs(c.completed_at).format('YYYY-MM-DD') !== today
+              ),
+            };
+          }
         } catch (error) {
           console.error('Error toggling completion on API:', error);
           // Fallback to local toggle
-          const habit = habits.find(h => h.id === id);
           const today = dayjs().format('YYYY-MM-DD');
           const isCompleted = habit.completions?.some(c => 
             dayjs(c.completed_at).format('YYYY-MM-DD') === today
@@ -192,17 +215,16 @@ export const HabitProvider = ({ children }) => {
         }
       } else {
         // Local toggle
-        const habit = habits.find(h => h.id === id);
         const today = dayjs().format('YYYY-MM-DD');
         const isCompleted = habit.completions?.some(c => 
-          dayjs(c.completed_at).format('YYYY-MM-DD') === today
+          dayjs(c.completed_at || c).format('YYYY-MM-DD') === today
         );
         
         if (isCompleted) {
           updated = {
             ...habit,
             completions: habit.completions.filter(c => 
-              dayjs(c.completed_at).format('YYYY-MM-DD') !== today
+              dayjs(c.completed_at || c).format('YYYY-MM-DD') !== today
             ),
           };
         } else {
@@ -216,8 +238,9 @@ export const HabitProvider = ({ children }) => {
           };
         }
       }
-      const updatedHabits = habits.map(habit => 
-        habit.id === id ? updated : habit
+
+      const updatedHabits = habits.map(h => 
+        h.id === id ? updated : h
       );
       setHabits(updatedHabits);
       await AsyncStorage.setItem('habits', JSON.stringify(updatedHabits));

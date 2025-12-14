@@ -149,19 +149,25 @@ const DetailsScreen = ({ route, navigation }) => {
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{currentStreak}</Text>
             <Text style={styles.statLabel}>Série actuelle</Text>
-            <Text style={styles.statIcon}>🔥</Text>
+            <View style={styles.statIconContainer}>
+              <MaterialCommunityIcons name="fire" size={32} color="#FF6B35" />
+            </View>
           </View>
 
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{longestStreak}</Text>
             <Text style={styles.statLabel}>Record</Text>
-            <Text style={styles.statIcon}>🏆</Text>
+            <View style={styles.statIconContainer}>
+              <MaterialCommunityIcons name="trophy" size={32} color="#FFD700" />
+            </View>
           </View>
 
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{completionRate}%</Text>
             <Text style={styles.statLabel}>30 jours</Text>
-            <Text style={styles.statIcon}>📊</Text>
+            <View style={styles.statIconContainer}>
+              <MaterialCommunityIcons name="chart-line" size={32} color="#4A90E2" />
+            </View>
           </View>
         </View>
 
@@ -329,8 +335,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 8,
   },
-  statIcon: {
-    fontSize: 20,
+  statIconContainer: {
+    marginTop: 8,
   },
   section: {
     padding: 20,

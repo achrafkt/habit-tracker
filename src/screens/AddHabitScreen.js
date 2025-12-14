@@ -60,7 +60,6 @@ const COLORS = [
   '#1E40AF', // bleu royal
   '#9F1239', // rose foncé
   '#164E63', // cyan foncé
-  '#B91C1C', // rouge vif foncé
   '#78350F', // brun foncé
   '#4C1D95', // indigo foncé
   '#831843', // magenta foncé
@@ -215,9 +214,9 @@ const AddHabitScreen = ({ navigation, route }) => {
           <Text style={styles.label}>Icône</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.iconGrid}>
-              {ICONS.map((icon, index) => (
+              {ICONS.map((icon) => (
                 <TouchableOpacity
-                  key={index}
+                  key={`${icon.family}-${icon.name}`}
                   style={[
                     styles.iconButton,
                     selectedIcon === icon && styles.iconButtonSelected,
