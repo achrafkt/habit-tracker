@@ -29,8 +29,11 @@ const LoginScreen = ({ navigation }) => {
     const result = await login(email, password);
     setLoading(false);
 
-    if (!result.success) {
-      Alert.alert('Login Failed', result.error);
+    if (result.success) {
+      // Navigate back to Settings or Home after successful login
+      navigation.goBack();
+    } else {
+      Alert.alert('Login Failed', result.error || 'Please check your credentials');
     }
   };
 

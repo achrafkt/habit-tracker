@@ -49,9 +49,15 @@ const DetailsScreen = ({ route, navigation }) => {
     );
   }
 
-  const currentStreak = getCurrentStreak(habit);
-  const longestStreak = getLongestStreak(habit);
-  const completionRate = getCompletionRate(habit, 30);
+  // Ensure completions is an array
+  const safeHabit = {
+    ...habit,
+    completions: habit.completions || [],
+  };
+
+  const currentStreak = getCurrentStreak(safeHabit);
+  const longestStreak = getLongestStreak(safeHabit);
+  const completionRate = getCompletionRate(safeHabit, 30);
 
   const handleDelete = () => {
     Alert.alert(
@@ -82,7 +88,7 @@ const DetailsScreen = ({ route, navigation }) => {
       labels.push(date.format('DD/MM'));
       
       // Check if habit was completed on this date
-      const isCompleted = habit.completions?.some(c => 
+      const isCompleted = safeHabit.completions?.some(c => 
         dayjs(c.completed_at || c).format('YYYY-MM-DD') === dateStr
       ) || false;
       
@@ -102,7 +108,7 @@ const DetailsScreen = ({ route, navigation }) => {
         </TouchableOpacity>
         <View style={styles.headerActions}>
           <TouchableOpacity 
-            onPress={() => navigation.navigate('AddHabit', { habitId: habit.id, editMode: true })}
+            onPress={() => navigation.navigate('AddHabit', { habitId: safeHabit.id, editMode: true })}
             style={styles.editButton}
           >
             <Ionicons name="create-outline" size={26} color="#4A90E2" />
@@ -114,28 +120,28 @@ const DetailsScreen = ({ route, navigation }) => {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.habitHeader, { backgroundColor: habit.color }]}>
-          {habit.icon && habit.icon.family ? (
+        <View style={[styles.habitHeader, { backgroundColor: safeHabit.color }]}>
+          {safeHabit.icon && safeHabit.icon.family ? (
             <View style={styles.iconContainer}>
               <IconComponent 
-                family={habit.icon.family}
-                name={habit.icon.name}
+                family={safeHabit.icon.family}
+                name={safeHabit.icon.name}
                 size={48}
                 color="#FFF"
               />
             </View>
           ) : (
-            <Text style={styles.habitIcon}>{habit.icon}</Text>
+            <Text style={styles.habitIcon}>{safeHabit.icon}</Text>
           )}
-          <Text style={styles.habitName}>{habit.name}</Text>
-          {habit.category && (
-            <Text style={styles.habitCategory}>{habit.category}</Text>
+          <Text style={styles.habitName}>{safeHabit.name}</Text>
+          {safeHabit.category && (
+            <Text style={styles.habitCategory}>{safeHabit.category}</Text>
           )}
           <Text style={styles.habitFrequency}>
-            {habit.frequency === 'daily' ? 'Quotidien' : 'Hebdomadaire'}
+            {safeHabit.frequency === 'daily' ? 'Quotidien' : 'Hebdomadaire'}
           </Text>
-          {habit.description && (
-            <Text style={styles.habitDescription}>{habit.description}</Text>
+          {safeHabit.description && (
+            <Text style={styles.habitDescription}>{safeHabit.description}</Text>
           )}
         </View>
 
@@ -176,7 +182,7 @@ const DetailsScreen = ({ route, navigation }) => {
                 backgroundGradientFrom: '#FFF',
                 backgroundGradientTo: '#FFF',
                 decimalPlaces: 0,
-                color: (opacity = 1) => habit.color,
+                color: (opacity = 1) => safeHabit.color,
                 labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
                 style: {
                   borderRadius: 16,
@@ -184,7 +190,7 @@ const DetailsScreen = ({ route, navigation }) => {
                 propsForDots: {
                   r: '6',
                   strokeWidth: '2',
-                  stroke: habit.color,
+                  stroke: safeHabit.color,
                 },
               }}
               bezier
@@ -199,20 +205,20 @@ const DetailsScreen = ({ route, navigation }) => {
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Date de création</Text>
               <Text style={styles.infoValue}>
-                {dayjs(habit.createdAt).format('DD MMMM YYYY')}
+                {dayjs(safeHabit.created_at || safeHabit.createdAt).format('DD MMMM YYYY')}
               </Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Total de complétions</Text>
-              <Text style={styles.infoValue}>{habit.completions.length}</Text>
+              <Text style={styles.infoValue}>{safeHabit.completions.length}</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Dernière complétion</Text>
               <Text style={styles.infoValue}>
-                {habit.completions.length > 0
-                  ? dayjs(habit.completions[habit.completions.length - 1]).format('DD/MM/YYYY')
+                {safeHabit.completions.length > 0
+                  ? dayjs(safeHabit.completions[safeHabit.completions.length - 1].completed_at || safeHabit.completions[safeHabit.completions.length - 1]).format('DD/MM/YYYY')
                   : 'Jamais'}
               </Text>
             </View>
