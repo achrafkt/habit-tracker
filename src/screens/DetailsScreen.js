@@ -9,9 +9,25 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { MaterialIcons, MaterialCommunityIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { useHabits } from '../contexts/HabitContext';
 import { LineChart } from 'react-native-chart-kit';
 import dayjs from 'dayjs';
+
+const IconComponent = ({ family, name, size, color }) => {
+  switch (family) {
+    case 'MaterialIcons':
+      return <MaterialIcons name={name} size={size} color={color} />;
+    case 'MaterialCommunityIcons':
+      return <MaterialCommunityIcons name={name} size={size} color={color} />;
+    case 'FontAwesome5':
+      return <FontAwesome5 name={name} size={size} color={color} />;
+    case 'Ionicons':
+      return <Ionicons name={name} size={size} color={color} />;
+    default:
+      return <MaterialIcons name={name} size={size} color={color} />;
+  }
+};
 
 const DetailsScreen = ({ route, navigation }) => {
   const { habitId } = route.params;
@@ -62,8 +78,15 @@ const DetailsScreen = ({ route, navigation }) => {
     
     for (let i = 6; i >= 0; i--) {
       const date = dayjs().subtract(i, 'day');
+      const dateStr = date.format('YYYY-MM-DD');
       labels.push(date.format('DD/MM'));
-      data.push(habit.completions.includes(date.format('YYYY-MM-DD')) ? 1 : 0);
+      
+      // Check if habit was completed on this date
+      const isCompleted = habit.completions?.some(c => 
+        dayjs(c.completed_at || c).format('YYYY-MM-DD') === dateStr
+      ) || false;
+      
+      data.push(isCompleted ? 1 : 0);
     }
     
     return { labels, data };
@@ -74,21 +97,46 @@ const DetailsScreen = ({ route, navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>←</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={28} color="#1A1A1A" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleDelete}>
-          <Text style={styles.deleteButton}>🗑️</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('AddHabit', { habitId: habit.id, editMode: true })}
+            style={styles.editButton}
+          >
+            <Ionicons name="create-outline" size={26} color="#4A90E2" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
+            <Ionicons name="trash-outline" size={26} color="#EF4444" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.habitHeader, { backgroundColor: habit.color }]}>
-          <Text style={styles.habitIcon}>{habit.icon}</Text>
+          {habit.icon && habit.icon.family ? (
+            <View style={styles.iconContainer}>
+              <IconComponent 
+                family={habit.icon.family}
+                name={habit.icon.name}
+                size={48}
+                color="#FFF"
+              />
+            </View>
+          ) : (
+            <Text style={styles.habitIcon}>{habit.icon}</Text>
+          )}
           <Text style={styles.habitName}>{habit.name}</Text>
+          {habit.category && (
+            <Text style={styles.habitCategory}>{habit.category}</Text>
+          )}
           <Text style={styles.habitFrequency}>
             {habit.frequency === 'daily' ? 'Quotidien' : 'Hebdomadaire'}
           </Text>
+          {habit.description && (
+            <Text style={styles.habitDescription}>{habit.description}</Text>
+          )}
         </View>
 
         <View style={styles.statsContainer}>
@@ -186,12 +234,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 16,
+  },
   backButton: {
-    fontSize: 28,
-    color: '#1A1A1A',
+    padding: 4,
+  },
+  editButton: {
+    padding: 4,
   },
   deleteButton: {
-    fontSize: 24,
+    padding: 4,
   },
   content: {
     flex: 1,
@@ -202,6 +256,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
   },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   habitIcon: {
     fontSize: 64,
     marginBottom: 12,
@@ -210,12 +273,27 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFF',
+    marginBottom: 4,
+  },
+  habitCategory: {
+    fontSize: 13,
+    color: '#FFF',
+    opacity: 0.8,
     marginBottom: 8,
+    textTransform: 'capitalize',
   },
   habitFrequency: {
     fontSize: 14,
     color: '#FFF',
     opacity: 0.9,
+    marginBottom: 8,
+  },
+  habitDescription: {
+    fontSize: 14,
+    color: '#FFF',
+    opacity: 0.85,
+    textAlign: 'center',
+    marginTop: 8,
   },
   statsContainer: {
     flexDirection: 'row',

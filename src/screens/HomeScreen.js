@@ -8,8 +8,24 @@ import {
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { MaterialIcons, MaterialCommunityIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { useHabits } from '../contexts/HabitContext';
 import dayjs from 'dayjs';
+
+const IconComponent = ({ family, name, size, color }) => {
+  switch (family) {
+    case 'MaterialIcons':
+      return <MaterialIcons name={name} size={size} color={color} />;
+    case 'MaterialCommunityIcons':
+      return <MaterialCommunityIcons name={name} size={size} color={color} />;
+    case 'FontAwesome5':
+      return <FontAwesome5 name={name} size={size} color={color} />;
+    case 'Ionicons':
+      return <Ionicons name={name} size={size} color={color} />;
+    default:
+      return <MaterialIcons name={name} size={size} color={color} />;
+  }
+};
 
 const HomeScreen = ({ navigation }) => {
   const { habits, toggleCompletion, isCompletedToday, getCurrentStreak } = useHabits();
@@ -18,37 +34,83 @@ const HomeScreen = ({ navigation }) => {
     const completed = isCompletedToday(item);
     const streak = getCurrentStreak(item);
 
+    const getDifficultyColor = (difficulty) => {
+      switch (difficulty) {
+        case 'easy': return '#10B981';
+        case 'medium': return '#F59E0B';
+        case 'hard': return '#EF4444';
+        default: return '#6B7280';
+      }
+    };
+
+    const getDifficultyLabel = (difficulty) => {
+      switch (difficulty) {
+        case 'easy': return 'Facile';
+        case 'medium': return 'Moyen';
+        case 'hard': return 'Difficile';
+        default: return '';
+      }
+    };
+
     return (
       <TouchableOpacity
         style={styles.habitCard}
         onPress={() => navigation.navigate('Details', { habitId: item.id })}
       >
         <View style={styles.habitLeft}>
-          <TouchableOpacity
-            style={[
-              styles.checkbox,
-              { borderColor: item.color },
-              completed && { backgroundColor: item.color }
-            ]}
-            onPress={() => toggleCompletion(item.id)}
-          >
-            {completed && <Text style={styles.checkmark}>✓</Text>}
-          </TouchableOpacity>
+          {item.icon && (
+            <TouchableOpacity
+              style={[styles.iconCheckbox, { backgroundColor: completed ? item.color : item.color + '20' }]}
+              onPress={() => toggleCompletion(item.id)}
+            >
+              <IconComponent 
+                family={item.icon.family}
+                name={item.icon.name}
+                size={20}
+                color={completed ? '#FFF' : item.color}
+              />
+              {completed && (
+                <View style={styles.checkBadge}>
+                  <MaterialIcons name="check-circle" size={14} color="#FFF" />
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
           
           <View style={styles.habitInfo}>
             <View style={styles.habitHeader}>
-              <Text style={styles.habitIcon}>{item.icon}</Text>
-              <Text style={styles.habitName}>{item.name}</Text>
+              <View style={styles.habitTitleContainer}>
+                <Text style={styles.habitName}>{item.name}</Text>
+                {item.category && (
+                  <Text style={styles.habitCategory}>{item.category}</Text>
+                )}
+              </View>
             </View>
-            <Text style={styles.habitFrequency}>
-              {item.frequency === 'daily' ? 'Quotidien' : 'Hebdomadaire'}
-            </Text>
+            
+            {item.description && (
+              <Text style={styles.habitDescription} numberOfLines={1}>
+                {item.description}
+              </Text>
+            )}
+            
+            <View style={styles.habitMeta}>
+              <Text style={styles.habitFrequency}>
+                {item.frequency === 'daily' ? 'Quotidien' : 'Hebdomadaire'}
+              </Text>
+              {item.difficulty && (
+                <View style={[styles.difficultyTag, { backgroundColor: getDifficultyColor(item.difficulty) + '20' }]}>
+                  <Text style={[styles.difficultyText, { color: getDifficultyColor(item.difficulty) }]}>
+                    {getDifficultyLabel(item.difficulty)}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
         </View>
 
         {streak > 0 && (
           <View style={styles.streakBadge}>
-            <Text style={styles.streakIcon}>🔥</Text>
+            <Ionicons name="flame" size={18} color="#FF6B35" />
             <Text style={styles.streakText}>{streak}</Text>
           </View>
         )}
@@ -69,13 +131,13 @@ const HomeScreen = ({ navigation }) => {
           style={styles.settingsButton}
           onPress={() => navigation.navigate('Settings')}
         >
-          <Text style={styles.settingsIcon}>⚙️</Text>
+          <Ionicons name="settings-outline" size={24} color="#666" />
         </TouchableOpacity>
       </View>
 
       {habits.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyIcon}>📋</Text>
+          <MaterialCommunityIcons name="clipboard-text-outline" size={64} color="#CCC" />
           <Text style={styles.emptyTitle}>Aucune habitude</Text>
           <Text style={styles.emptyText}>
             Commencez par ajouter votre première habitude !
@@ -95,7 +157,7 @@ const HomeScreen = ({ navigation }) => {
         style={styles.fab}
         onPress={() => navigation.navigate('AddHabit')}
       >
-        <Text style={styles.fabIcon}>+</Text>
+        <MaterialIcons name="add" size={32} color="#FFF" />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -136,9 +198,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  settingsIcon: {
-    fontSize: 24,
-  },
   listContent: {
     padding: 20,
     paddingTop: 10,
@@ -162,19 +221,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
-  checkbox: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 2.5,
+  iconCheckbox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+    position: 'relative',
   },
-  checkmark: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+  checkBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: '#10B981',
+    borderRadius: 10,
+    width: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFF',
   },
   habitInfo: {
     flex: 1,
@@ -182,32 +249,54 @@ const styles = StyleSheet.create({
   habitHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 6,
   },
-  habitIcon: {
-    fontSize: 20,
-    marginRight: 8,
+  habitTitleContainer: {
+    flex: 1,
   },
   habitName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1A1A1A',
   },
+  habitCategory: {
+    fontSize: 11,
+    color: '#999',
+    marginTop: 2,
+  },
+  habitDescription: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 6,
+    lineHeight: 18,
+  },
+  habitMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   habitFrequency: {
     fontSize: 12,
     color: '#999',
-    marginTop: 4,
+  },
+  difficultyTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  difficultyText: {
+    fontSize: 10,
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
   streakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFF3E0',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 12,
-  },
-  streakIcon: {
-    fontSize: 16,
-    marginRight: 4,
+    gap: 4,
   },
   streakText: {
     fontSize: 14,
@@ -219,10 +308,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 40,
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 20,
@@ -250,11 +335,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
-  },
-  fabIcon: {
-    fontSize: 32,
-    color: '#FFF',
-    fontWeight: '300',
   },
 });
 

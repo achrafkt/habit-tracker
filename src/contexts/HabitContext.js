@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import dayjs from 'dayjs';
+import habitService from '../services/habitService';
+import { useAuth } from './AuthContext';
 
 const HabitContext = createContext();
 
@@ -15,146 +17,240 @@ export const useHabits = () => {
 export const HabitProvider = ({ children }) => {
   const [habits, setHabits] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { isAuthenticated } = useAuth();
 
-  // Charger les habitudes au démarrage
+  // Load habits - works both online and offline
   useEffect(() => {
     loadHabits();
-  }, []);
-
-  // Sauvegarder les habitudes à chaque modification
-  useEffect(() => {
-    if (!loading) {
-      saveHabits();
-    }
-  }, [habits]);
+  }, [isAuthenticated]);
 
   const loadHabits = async () => {
     try {
-      const storedHabits = await AsyncStorage.getItem('habits');
-      if (storedHabits) {
-        setHabits(JSON.parse(storedHabits));
+      setLoading(true);
+      if (isAuthenticated) {
+        // Try to load from API if authenticated
+        try {
+          const data = await habitService.getHabits();
+          setHabits(data);
+          // Cache data locally
+          await AsyncStorage.setItem('habits', JSON.stringify(data));
+        } catch (error) {
+          console.error('Error loading habits from API:', error);
+          // Fallback to local storage
+          const localData = await AsyncStorage.getItem('habits');
+          if (localData) {
+            setHabits(JSON.parse(localData));
+          }
+        }
+      } else {
+        // Load from local storage when offline
+        const localData = await AsyncStorage.getItem('habits');
+        if (localData) {
+          setHabits(JSON.parse(localData));
+        } else {
+          setHabits([]);
+        }
       }
     } catch (error) {
-      console.error('Erreur lors du chargement des habitudes:', error);
+      console.error('Error loading habits:', error);
+      setHabits([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const saveHabits = async () => {
+  const addHabit = async (habit) => {
     try {
-      await AsyncStorage.setItem('habits', JSON.stringify(habits));
+      let newHabit;
+      if (isAuthenticated) {
+        // Try to create on server
+        try {
+          newHabit = await habitService.createHabit({
+            name: habit.name,
+            category: habit.category,
+            description: habit.description,
+            icon: habit.icon || { name: 'fitness', family: 'MaterialIcons' },
+            color: habit.color || '#1E3A8A',
+            difficulty: habit.difficulty,
+            frequency: habit.frequency || 'daily',
+            target_days: habit.targetDays || 7,
+            notification_enabled: habit.reminderEnabled || false,
+            notification_time: habit.notificationTime || '09:00',
+          });
+        } catch (error) {
+          console.error('Error adding habit to API:', error);
+          // Fallback to local creation
+          newHabit = {
+            id: `local-${Date.now()}`,
+            ...habit,
+            completions: [],
+            current_streak: 0,
+            longest_streak: 0,
+            created_at: new Date().toISOString(),
+          };
+        }
+      } else {
+        // Create locally
+        newHabit = {
+          id: `local-${Date.now()}`,
+          ...habit,
+          completions: [],
+          current_streak: 0,
+          longest_streak: 0,
+          created_at: new Date().toISOString(),
+        };
+      }
+      const updatedHabits = [...habits, newHabit];
+      setHabits(updatedHabits);
+      await AsyncStorage.setItem('habits', JSON.stringify(updatedHabits));
+      return newHabit;
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde des habitudes:', error);
+      console.error('Error adding habit:', error);
+      throw error;
     }
   };
 
-  const addHabit = (habit) => {
-    const newHabit = {
-      id: Date.now().toString(),
-      name: habit.name,
-      icon: habit.icon || '⭐',
-      color: habit.color || '#4A90E2',
-      frequency: habit.frequency || 'daily', // 'daily' ou 'weekly'
-      completions: [], // Tableau de dates de complétion
-      createdAt: dayjs().format('YYYY-MM-DD'),
-      notificationEnabled: habit.notificationEnabled || false,
-      notificationTime: habit.notificationTime || '09:00',
-    };
-    setHabits([...habits, newHabit]);
-  };
-
-  const updateHabit = (id, updates) => {
-    setHabits(habits.map(habit => 
-      habit.id === id ? { ...habit, ...updates } : habit
-    ));
-  };
-
-  const deleteHabit = (id) => {
-    setHabits(habits.filter(habit => habit.id !== id));
-  };
-
-  const toggleCompletion = (id) => {
-    const today = dayjs().format('YYYY-MM-DD');
-    setHabits(habits.map(habit => {
-      if (habit.id === id) {
-        const completions = [...habit.completions];
-        const index = completions.indexOf(today);
-        
-        if (index > -1) {
-          // Déjà complété aujourd'hui, retirer
-          completions.splice(index, 1);
-        } else {
-          // Pas encore complété, ajouter
-          completions.push(today);
+  const updateHabit = async (id, updates) => {
+    try {
+      let updated;
+      if (isAuthenticated && !id.toString().startsWith('local-')) {
+        try {
+          updated = await habitService.updateHabit(id, updates);
+        } catch (error) {
+          console.error('Error updating habit on API:', error);
+          // Fallback to local update
+          const habit = habits.find(h => h.id === id);
+          updated = { ...habit, ...updates };
         }
-        
-        return { ...habit, completions };
+      } else {
+        // Local update
+        const habit = habits.find(h => h.id === id);
+        updated = { ...habit, ...updates };
       }
-      return habit;
-    }));
+      const updatedHabits = habits.map(habit => 
+        habit.id === id ? updated : habit
+      );
+      setHabits(updatedHabits);
+      await AsyncStorage.setItem('habits', JSON.stringify(updatedHabits));
+      return updated;
+    } catch (error) {
+      console.error('Error updating habit:', error);
+      throw error;
+    }
+  };
+
+  const deleteHabit = async (id) => {
+    try {
+      if (isAuthenticated && !id.toString().startsWith('local-')) {
+        try {
+          await habitService.deleteHabit(id);
+        } catch (error) {
+          console.error('Error deleting habit from API:', error);
+        }
+      }
+      const updatedHabits = habits.filter(habit => habit.id !== id);
+      setHabits(updatedHabits);
+      await AsyncStorage.setItem('habits', JSON.stringify(updatedHabits));
+    } catch (error) {
+      console.error('Error deleting habit:', error);
+      throw error;
+    }
+  };
+
+  const toggleCompletion = async (id) => {
+    try {
+      let updated;
+      if (isAuthenticated && !id.toString().startsWith('local-')) {
+        try {
+          updated = await habitService.toggleCompletion(id);
+        } catch (error) {
+          console.error('Error toggling completion on API:', error);
+          // Fallback to local toggle
+          const habit = habits.find(h => h.id === id);
+          const today = dayjs().format('YYYY-MM-DD');
+          const isCompleted = habit.completions?.some(c => 
+            dayjs(c.completed_at).format('YYYY-MM-DD') === today
+          );
+          
+          if (isCompleted) {
+            updated = {
+              ...habit,
+              completions: habit.completions.filter(c => 
+                dayjs(c.completed_at).format('YYYY-MM-DD') !== today
+              ),
+            };
+          } else {
+            updated = {
+              ...habit,
+              completions: [
+                ...(habit.completions || []),
+                { completed_at: new Date().toISOString() }
+              ],
+              current_streak: (habit.current_streak || 0) + 1,
+            };
+          }
+        }
+      } else {
+        // Local toggle
+        const habit = habits.find(h => h.id === id);
+        const today = dayjs().format('YYYY-MM-DD');
+        const isCompleted = habit.completions?.some(c => 
+          dayjs(c.completed_at).format('YYYY-MM-DD') === today
+        );
+        
+        if (isCompleted) {
+          updated = {
+            ...habit,
+            completions: habit.completions.filter(c => 
+              dayjs(c.completed_at).format('YYYY-MM-DD') !== today
+            ),
+          };
+        } else {
+          updated = {
+            ...habit,
+            completions: [
+              ...(habit.completions || []),
+              { completed_at: new Date().toISOString() }
+            ],
+            current_streak: (habit.current_streak || 0) + 1,
+          };
+        }
+      }
+      const updatedHabits = habits.map(habit => 
+        habit.id === id ? updated : habit
+      );
+      setHabits(updatedHabits);
+      await AsyncStorage.setItem('habits', JSON.stringify(updatedHabits));
+      return updated;
+    } catch (error) {
+      console.error('Error toggling completion:', error);
+      throw error;
+    }
   };
 
   const isCompletedToday = (habit) => {
     const today = dayjs().format('YYYY-MM-DD');
-    return habit.completions.includes(today);
+    return habit.completions?.some(c => 
+      dayjs(c.completed_at).format('YYYY-MM-DD') === today
+    ) || false;
   };
 
   const getCurrentStreak = (habit) => {
-    if (habit.completions.length === 0) return 0;
-
-    const sortedCompletions = [...habit.completions].sort().reverse();
-    let streak = 0;
-    let currentDate = dayjs();
-
-    // Vérifier si complété aujourd'hui ou hier
-    const today = currentDate.format('YYYY-MM-DD');
-    const yesterday = currentDate.subtract(1, 'day').format('YYYY-MM-DD');
-    
-    if (sortedCompletions[0] !== today && sortedCompletions[0] !== yesterday) {
-      return 0;
-    }
-
-    // Calculer le streak
-    for (let i = 0; i < sortedCompletions.length; i++) {
-      const expectedDate = currentDate.subtract(i, 'day').format('YYYY-MM-DD');
-      if (sortedCompletions[i] === expectedDate) {
-        streak++;
-      } else {
-        break;
-      }
-    }
-
-    return streak;
+    if (!habit.current_streak) return 0;
+    return habit.current_streak;
   };
 
   const getLongestStreak = (habit) => {
-    if (habit.completions.length === 0) return 0;
-
-    const sortedCompletions = [...habit.completions].sort();
-    let maxStreak = 1;
-    let currentStreak = 1;
-
-    for (let i = 1; i < sortedCompletions.length; i++) {
-      const prevDate = dayjs(sortedCompletions[i - 1]);
-      const currDate = dayjs(sortedCompletions[i]);
-      const daysDiff = currDate.diff(prevDate, 'day');
-
-      if (daysDiff === 1) {
-        currentStreak++;
-        maxStreak = Math.max(maxStreak, currentStreak);
-      } else {
-        currentStreak = 1;
-      }
-    }
-
-    return maxStreak;
+    if (!habit.longest_streak) return 0;
+    return habit.longest_streak;
   };
 
   const getCompletionRate = (habit, days = 30) => {
+    if (!habit.completions) return 0;
+    
     const startDate = dayjs().subtract(days, 'day');
-    const completionsInPeriod = habit.completions.filter(date => 
-      dayjs(date).isAfter(startDate)
+    const completionsInPeriod = habit.completions.filter(c => 
+      dayjs(c.completed_at).isAfter(startDate)
     ).length;
     
     return Math.round((completionsInPeriod / days) * 100);

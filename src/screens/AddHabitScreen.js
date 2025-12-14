@@ -7,36 +7,135 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { MaterialIcons, MaterialCommunityIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { useHabits } from '../contexts/HabitContext';
 
-const ICONS = ['⭐', '💪', '📚', '🏃', '💧', '🧘', '🎯', '✍️', '🎨', '🎵', '🌱', '💼'];
-const COLORS = [
-  '#4A90E2', '#E94B3C', '#50C878', '#FFB347', 
-  '#9B59B6', '#1ABC9C', '#E67E22', '#3498DB',
-  '#E91E63', '#00BCD4', '#FF5722', '#795548'
+const CATEGORIES = [
+  { id: 'health', label: 'Santé', icon: 'heart', family: 'MaterialCommunityIcons' },
+  { id: 'fitness', label: 'Fitness', icon: 'dumbbell', family: 'MaterialCommunityIcons' },
+  { id: 'learning', label: 'Apprentissage', icon: 'book', family: 'MaterialCommunityIcons' },
+  { id: 'productivity', label: 'Productivité', icon: 'briefcase', family: 'MaterialCommunityIcons' },
+  { id: 'mindfulness', label: 'Bien-être', icon: 'meditation', family: 'MaterialCommunityIcons' },
+  { id: 'other', label: 'Autre', icon: 'dots-horizontal', family: 'MaterialCommunityIcons' },
 ];
 
-const AddHabitScreen = ({ navigation }) => {
-  const { addHabit } = useHabits();
-  const [name, setName] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState('⭐');
-  const [selectedColor, setSelectedColor] = useState('#4A90E2');
-  const [frequency, setFrequency] = useState('daily');
+const ICONS = [
+  { name: 'fitness', family: 'MaterialIcons' },
+  { name: 'local-library', family: 'MaterialIcons' },
+  { name: 'water-drop', family: 'MaterialIcons' },
+  { name: 'self-improvement', family: 'MaterialIcons' },
+  { name: 'restaurant', family: 'MaterialIcons' },
+  { name: 'bedtime', family: 'MaterialIcons' },
+  { name: 'run-circle', family: 'MaterialCommunityIcons' },
+  { name: 'book-open-page-variant', family: 'MaterialCommunityIcons' },
+  { name: 'meditation', family: 'MaterialCommunityIcons' },
+  { name: 'dumbbell', family: 'MaterialCommunityIcons' },
+  { name: 'brain', family: 'MaterialCommunityIcons' },
+  { name: 'heart-pulse', family: 'MaterialCommunityIcons' },
+  { name: 'leaf', family: 'MaterialCommunityIcons' },
+  { name: 'coffee', family: 'MaterialCommunityIcons' },
+  { name: 'music', family: 'MaterialCommunityIcons' },
+  { name: 'palette', family: 'MaterialCommunityIcons' },
+  { name: 'briefcase', family: 'MaterialCommunityIcons' },
+  { name: 'camera', family: 'MaterialCommunityIcons' },
+  { name: 'walking', family: 'FontAwesome5' },
+  { name: 'bicycle', family: 'Ionicons' },
+  { name: 'moon', family: 'Ionicons' },
+  { name: 'sunny', family: 'Ionicons' },
+  { name: 'water', family: 'Ionicons' },
+  { name: 'flame', family: 'Ionicons' },
+];
 
-  const handleSubmit = () => {
+const COLORS = [
+  '#1E3A8A', // bleu foncé
+  '#991B1B', // rouge foncé
+  '#064E3B', // vert foncé
+  '#92400E', // orange foncé
+  '#581C87', // violet foncé
+  '#134E4A', // turquoise foncé
+  '#7C2D12', // marron orangé
+  '#1E40AF', // bleu royal
+  '#9F1239', // rose foncé
+  '#164E63', // cyan foncé
+  '#B91C1C', // rouge vif foncé
+  '#78350F', // brun foncé
+  '#4C1D95', // indigo foncé
+  '#831843', // magenta foncé
+  '#065F46', // émeraude foncé
+  '#713F12', // ambre foncé
+  '#3B0764', // pourpre foncé
+  '#0C4A6E', // bleu ciel foncé
+  '#881337', // cramoisi foncé
+  '#14532D', // vert forêt foncé
+  '#7E22CE', // violet profond
+  '#1E293B', // ardoise foncé
+];
+
+const DIFFICULTY_LEVELS = [
+  { id: 'easy', label: 'Facile', color: '#10B981' },
+  { id: 'medium', label: 'Moyen', color: '#F59E0B' },
+  { id: 'hard', label: 'Difficile', color: '#EF4444' },
+];
+
+const IconComponent = ({ family, name, size, color }) => {
+  switch (family) {
+    case 'MaterialIcons':
+      return <MaterialIcons name={name} size={size} color={color} />;
+    case 'MaterialCommunityIcons':
+      return <MaterialCommunityIcons name={name} size={size} color={color} />;
+    case 'FontAwesome5':
+      return <FontAwesome5 name={name} size={size} color={color} />;
+    case 'Ionicons':
+      return <Ionicons name={name} size={size} color={color} />;
+    default:
+      return <MaterialIcons name={name} size={size} color={color} />;
+  }
+};
+
+const AddHabitScreen = ({ navigation, route }) => {
+  const { addHabit, updateHabit, habits } = useHabits();
+  
+  // Mode édition
+  const editMode = route?.params?.editMode || false;
+  const habitId = route?.params?.habitId;
+  const existingHabit = editMode && habitId ? habits.find(h => h.id === habitId) : null;
+  
+  const [category, setCategory] = useState(existingHabit?.category || 'health');
+  const [name, setName] = useState(existingHabit?.name || '');
+  const [description, setDescription] = useState(existingHabit?.description || '');
+  const [selectedIcon, setSelectedIcon] = useState(existingHabit?.icon || ICONS[0]);
+  const [selectedColor, setSelectedColor] = useState(existingHabit?.color || COLORS[0]);
+  const [difficulty, setDifficulty] = useState(existingHabit?.difficulty || 'medium');
+  const [frequency, setFrequency] = useState(existingHabit?.frequency || 'daily');
+  const [targetDays, setTargetDays] = useState(existingHabit?.targetDays?.toString() || '7');
+  const [reminderEnabled, setReminderEnabled] = useState(existingHabit?.reminderEnabled || false);
+
+  const handleSubmit = async () => {
     if (!name.trim()) {
       Alert.alert('Erreur', 'Veuillez entrer un nom pour l\'habitude');
       return;
     }
 
-    addHabit({
+    const habitData = {
+      category,
       name: name.trim(),
+      description: description.trim(),
       icon: selectedIcon,
       color: selectedColor,
+      difficulty,
       frequency,
-    });
+      targetDays: parseInt(targetDays) || 7,
+      reminderEnabled,
+    };
+
+    if (editMode && habitId) {
+      await updateHabit(habitId, habitData);
+    } else {
+      await addHabit(habitData);
+    }
 
     navigation.goBack();
   };
@@ -47,13 +146,45 @@ const AddHabitScreen = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.cancelButton}>Annuler</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Nouvelle habitude</Text>
+        <Text style={styles.title}>{editMode ? 'Modifier l\'habitude' : 'Nouvelle habitude'}</Text>
         <TouchableOpacity onPress={handleSubmit}>
           <Text style={styles.saveButton}>Sauver</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.section}>
+          <Text style={styles.label}>Catégorie</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+            <View style={styles.categoryGrid}>
+              {CATEGORIES.map(cat => (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={[
+                    styles.categoryButton,
+                    category === cat.id && styles.categoryButtonSelected,
+                    category === cat.id && { backgroundColor: selectedColor }
+                  ]}
+                  onPress={() => setCategory(cat.id)}
+                >
+                  <IconComponent 
+                    family={cat.family}
+                    name={cat.icon}
+                    size={20}
+                    color={category === cat.id ? '#FFF' : '#666'}
+                  />
+                  <Text style={[
+                    styles.categoryButtonText,
+                    category === cat.id && styles.categoryButtonTextActive
+                  ]}>
+                    {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+
         <View style={styles.section}>
           <Text style={styles.label}>Nom de l'habitude</Text>
           <TextInput
@@ -67,40 +198,87 @@ const AddHabitScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.label}>Description (optionnel)</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Ajoutez des détails sur votre habitude..."
+            placeholderTextColor="#999"
+            multiline
+            numberOfLines={3}
+            textAlignVertical="top"
+          />
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.label}>Icône</Text>
-          <View style={styles.iconGrid}>
-            {ICONS.map(icon => (
-              <TouchableOpacity
-                key={icon}
-                style={[
-                  styles.iconButton,
-                  selectedIcon === icon && styles.iconButtonSelected,
-                  selectedIcon === icon && { borderColor: selectedColor }
-                ]}
-                onPress={() => setSelectedIcon(icon)}
-              >
-                <Text style={styles.iconText}>{icon}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.iconGrid}>
+              {ICONS.map((icon, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.iconButton,
+                    selectedIcon === icon && styles.iconButtonSelected,
+                    selectedIcon === icon && { borderColor: selectedColor }
+                  ]}
+                  onPress={() => setSelectedIcon(icon)}
+                >
+                  <IconComponent 
+                    family={icon.family}
+                    name={icon.name}
+                    size={24}
+                    color={selectedIcon === icon ? selectedColor : '#666'}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.label}>Couleur</Text>
-          <View style={styles.colorGrid}>
-            {COLORS.map(color => (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.colorGrid}>
+              {COLORS.map(color => (
+                <TouchableOpacity
+                  key={color}
+                  style={[
+                    styles.colorButton,
+                    { backgroundColor: color },
+                    selectedColor === color && styles.colorButtonSelected
+                  ]}
+                  onPress={() => setSelectedColor(color)}
+                >
+                  {selectedColor === color && (
+                    <MaterialIcons name="check" size={24} color="#FFF" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.label}>Difficulté</Text>
+          <View style={styles.difficultyButtons}>
+            {DIFFICULTY_LEVELS.map(level => (
               <TouchableOpacity
-                key={color}
+                key={level.id}
                 style={[
-                  styles.colorButton,
-                  { backgroundColor: color },
-                  selectedColor === color && styles.colorButtonSelected
+                  styles.difficultyButton,
+                  difficulty === level.id && styles.difficultyButtonActive,
+                  difficulty === level.id && { backgroundColor: level.color, borderColor: level.color }
                 ]}
-                onPress={() => setSelectedColor(color)}
+                onPress={() => setDifficulty(level.id)}
               >
-                {selectedColor === color && (
-                  <Text style={styles.colorCheckmark}>✓</Text>
-                )}
+                <Text style={[
+                  styles.difficultyButtonText,
+                  difficulty === level.id && styles.difficultyButtonTextActive
+                ]}>
+                  {level.label}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -143,11 +321,50 @@ const AddHabitScreen = ({ navigation }) => {
           </View>
         </View>
 
+        <View style={styles.section}>
+          <Text style={styles.label}>Objectif (jours)</Text>
+          <TextInput
+            style={styles.input}
+            value={targetDays}
+            onChangeText={setTargetDays}
+            placeholder="Ex: 30"
+            placeholderTextColor="#999"
+            keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.reminderRow}>
+            <View>
+              <Text style={styles.label}>Rappels</Text>
+              <Text style={styles.reminderSubtext}>Recevoir une notification quotidienne</Text>
+            </View>
+            <Switch
+              value={reminderEnabled}
+              onValueChange={setReminderEnabled}
+              trackColor={{ false: '#E0E0E0', true: selectedColor + '60' }}
+              thumbColor={reminderEnabled ? selectedColor : '#FFF'}
+            />
+          </View>
+        </View>
+
         <View style={styles.previewSection}>
           <Text style={styles.label}>Aperçu</Text>
           <View style={[styles.previewCard, { borderLeftColor: selectedColor }]}>
-            <Text style={styles.previewIcon}>{selectedIcon}</Text>
-            <Text style={styles.previewName}>{name || 'Nom de l\'habitude'}</Text>
+            <View style={[styles.previewIconContainer, { backgroundColor: selectedColor + '20' }]}>
+              <IconComponent 
+                family={selectedIcon.family}
+                name={selectedIcon.name}
+                size={24}
+                color={selectedColor}
+              />
+            </View>
+            <View style={styles.previewInfo}>
+              <Text style={styles.previewName}>{name || 'Nom de l\'habitude'}</Text>
+              <Text style={styles.previewCategory}>
+                {CATEGORIES.find(c => c.id === category)?.label}
+              </Text>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -196,6 +413,36 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
     marginBottom: 12,
   },
+  categoryScroll: {
+    marginHorizontal: -20,
+    paddingHorizontal: 20,
+  },
+  categoryGrid: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  categoryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#FFF',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+  },
+  categoryButtonSelected: {
+    borderColor: 'transparent',
+  },
+  categoryButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+  },
+  categoryButtonTextActive: {
+    color: '#FFF',
+  },
   input: {
     backgroundColor: '#FFF',
     borderRadius: 12,
@@ -205,10 +452,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
+  textArea: {
+    minHeight: 80,
+    paddingTop: 16,
+  },
   iconGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
+    gap: 10,
   },
   iconButton: {
     width: 56,
@@ -223,13 +473,9 @@ const styles = StyleSheet.create({
   iconButtonSelected: {
     borderWidth: 2.5,
   },
-  iconText: {
-    fontSize: 28,
-  },
   colorGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
+    gap: 10,
   },
   colorButton: {
     width: 56,
@@ -237,6 +483,8 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   colorButtonSelected: {
     borderWidth: 3,
@@ -247,10 +495,29 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
-  colorCheckmark: {
+  difficultyButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  difficultyButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: '#FFF',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+  },
+  difficultyButtonActive: {
+    borderColor: 'transparent',
+  },
+  difficultyButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+  },
+  difficultyButtonTextActive: {
     color: '#FFF',
-    fontSize: 24,
-    fontWeight: 'bold',
   },
   frequencyButtons: {
     flexDirection: 'row',
@@ -276,8 +543,24 @@ const styles = StyleSheet.create({
   frequencyButtonTextActive: {
     color: '#FFF',
   },
+  reminderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  reminderSubtext: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
+  },
   previewSection: {
     marginTop: 20,
+    marginBottom: 40,
   },
   previewCard: {
     backgroundColor: '#FFF',
@@ -286,15 +569,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderLeftWidth: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  previewIcon: {
-    fontSize: 24,
+  previewIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
+  },
+  previewInfo: {
+    flex: 1,
   },
   previewName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1A1A1A',
+  },
+  previewCategory: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
   },
 });
 

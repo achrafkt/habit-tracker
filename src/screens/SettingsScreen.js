@@ -8,26 +8,22 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../contexts/AuthContext';
 
 const SettingsScreen = ({ navigation }) => {
-  const handleClearData = () => {
+  const { user, logout, isAuthenticated } = useAuth();
+
+  const handleLogout = () => {
     Alert.alert(
-      'Effacer toutes les données',
-      'Êtes-vous sûr de vouloir effacer toutes vos habitudes ? Cette action est irréversible.',
+      'Logout',
+      'Are you sure you want to logout?',
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Effacer',
+          text: 'Logout',
           style: 'destructive',
           onPress: async () => {
-            try {
-              await AsyncStorage.removeItem('habits');
-              Alert.alert('Succès', 'Toutes les données ont été effacées');
-              navigation.goBack();
-            } catch (error) {
-              Alert.alert('Erreur', 'Impossible d\'effacer les données');
-            }
+            await logout();
           },
         },
       ]
@@ -36,8 +32,8 @@ const SettingsScreen = ({ navigation }) => {
 
   const handleAbout = () => {
     Alert.alert(
-      'À propos',
-      'Habit Tracker v1.0\n\nUne application pour suivre et maintenir vos habitudes quotidiennes.\n\nDéveloppée avec React Native.',
+      'About',
+      'Habit Tracker v1.0\n\nAn application to track and maintain your daily habits.\n\nDeveloped with React Native & Laravel.',
       [{ text: 'OK' }]
     );
   };
@@ -68,48 +64,58 @@ const SettingsScreen = ({ navigation }) => {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {isAuthenticated ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Account</Text>
+            <View style={styles.settingsGroup}>
+              <View style={styles.settingItem}>
+                <View style={styles.settingLeft}>
+                  <Text style={styles.settingIcon}>👤</Text>
+                  <View>
+                    <Text style={styles.settingTitle}>Profile</Text>
+                    <Text style={styles.settingSubtitle}>{user?.name}</Text>
+                    <Text style={styles.settingSubtitle}>{user?.email}</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Account</Text>
+            <View style={styles.settingsGroup}>
+              <SettingItem
+                icon="👤"
+                title="Login"
+                subtitle="Connect to sync your habits"
+                onPress={() => navigation.navigate('Login')}
+              />
+              <View style={styles.divider} />
+              <SettingItem
+                icon="✨"
+                title="Register"
+                subtitle="Create a new account"
+                onPress={() => navigation.navigate('Register')}
+              />
+            </View>
+          </View>
+        )}
+
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Général</Text>
+          <Text style={styles.sectionTitle}>General</Text>
           <View style={styles.settingsGroup}>
             <SettingItem
               icon="🔔"
               title="Notifications"
-              subtitle="Gérer les rappels quotidiens"
-              onPress={() => Alert.alert('Info', 'Fonctionnalité en développement')}
+              subtitle="Manage daily reminders"
+              onPress={() => Alert.alert('Info', 'Feature in development')}
             />
             <View style={styles.divider} />
             <SettingItem
               icon="🌙"
-              title="Thème"
-              subtitle="Clair, sombre ou automatique"
-              onPress={() => Alert.alert('Info', 'Fonctionnalité en développement')}
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Données</Text>
-          <View style={styles.settingsGroup}>
-            <SettingItem
-              icon="📤"
-              title="Exporter les données"
-              subtitle="Sauvegarder vos habitudes"
-              onPress={() => Alert.alert('Info', 'Fonctionnalité en développement')}
-            />
-            <View style={styles.divider} />
-            <SettingItem
-              icon="📥"
-              title="Importer des données"
-              subtitle="Restaurer une sauvegarde"
-              onPress={() => Alert.alert('Info', 'Fonctionnalité en développement')}
-            />
-            <View style={styles.divider} />
-            <SettingItem
-              icon="🗑️"
-              title="Effacer toutes les données"
-              subtitle="Supprimer toutes les habitudes"
-              onPress={handleClearData}
-              danger
+              title="Theme"
+              subtitle="Light, dark or automatic"
+              onPress={() => Alert.alert('Info', 'Feature in development')}
             />
           </View>
         </View>
@@ -119,26 +125,40 @@ const SettingsScreen = ({ navigation }) => {
           <View style={styles.settingsGroup}>
             <SettingItem
               icon="❓"
-              title="Aide"
-              subtitle="Besoin d'assistance ?"
-              onPress={() => Alert.alert('Info', 'Fonctionnalité en développement')}
+              title="Help"
+              subtitle="Need assistance?"
+              onPress={() => Alert.alert('Info', 'Feature in development')}
             />
             <View style={styles.divider} />
             <SettingItem
               icon="⭐"
-              title="Évaluer l'application"
-              subtitle="Partagez votre avis"
-              onPress={() => Alert.alert('Merci !', 'Merci de votre soutien')}
+              title="Rate the app"
+              subtitle="Share your feedback"
+              onPress={() => Alert.alert('Thank you!', 'Thank you for your support')}
             />
             <View style={styles.divider} />
             <SettingItem
               icon="ℹ️"
-              title="À propos"
-              subtitle="Version et informations"
+              title="About"
+              subtitle="Version and information"
               onPress={handleAbout}
             />
           </View>
         </View>
+
+        {isAuthenticated && (
+          <View style={styles.section}>
+            <View style={styles.settingsGroup}>
+              <SettingItem
+                icon="🚪"
+                title="Logout"
+                subtitle="Sign out of your account"
+                onPress={handleLogout}
+                danger
+              />
+            </View>
+          </View>
+        )}
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Habit Tracker v1.0</Text>
