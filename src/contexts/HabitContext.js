@@ -209,7 +209,6 @@ export const HabitProvider = ({ children }) => {
                 ...(habit.completions || []),
                 { completed_at: new Date().toISOString() }
               ],
-              current_streak: (habit.current_streak || 0) + 1,
             };
           }
         }
@@ -234,7 +233,6 @@ export const HabitProvider = ({ children }) => {
               ...(habit.completions || []),
               { completed_at: new Date().toISOString() }
             ],
-            current_streak: (habit.current_streak || 0) + 1,
           };
         }
       }
@@ -259,8 +257,29 @@ export const HabitProvider = ({ children }) => {
   };
 
   const getCurrentStreak = (habit) => {
-    if (!habit.current_streak) return 0;
-    return habit.current_streak;
+    if (!habit || !habit.completions || habit.completions.length === 0) return 0;
+    
+    // Calculate streak based on consecutive days
+    const sortedCompletions = [...habit.completions].sort((a, b) => 
+      dayjs(b.completed_at || b).diff(dayjs(a.completed_at || a))
+    );
+    
+    let streak = 0;
+    let checkDate = dayjs();
+    
+    for (const completion of sortedCompletions) {
+      const completionDate = dayjs(completion.completed_at || completion);
+      const diffDays = checkDate.diff(completionDate, 'day');
+      
+      if (diffDays === 0 || diffDays === 1) {
+        streak++;
+        checkDate = completionDate;
+      } else {
+        break;
+      }
+    }
+    
+    return streak;
   };
 
   const getLongestStreak = (habit) => {

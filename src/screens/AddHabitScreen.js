@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, MaterialCommunityIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { useHabits } from '../contexts/HabitContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const CATEGORIES = [
   { id: 'health', label: 'Santé', icon: 'heart', family: 'MaterialCommunityIcons' },
@@ -19,6 +20,15 @@ const CATEGORIES = [
   { id: 'learning', label: 'Apprentissage', icon: 'book', family: 'MaterialCommunityIcons' },
   { id: 'productivity', label: 'Productivité', icon: 'briefcase', family: 'MaterialCommunityIcons' },
   { id: 'mindfulness', label: 'Bien-être', icon: 'meditation', family: 'MaterialCommunityIcons' },
+  { id: 'nutrition', label: 'Nutrition', icon: 'food-apple', family: 'MaterialCommunityIcons' },
+  { id: 'sleep', label: 'Sommeil', icon: 'sleep', family: 'MaterialCommunityIcons' },
+  { id: 'social', label: 'Social', icon: 'account-group', family: 'MaterialCommunityIcons' },
+  { id: 'finance', label: 'Finance', icon: 'cash', family: 'MaterialCommunityIcons' },
+  { id: 'creativity', label: 'Créativité', icon: 'palette', family: 'MaterialCommunityIcons' },
+  { id: 'hobby', label: 'Loisirs', icon: 'gamepad-variant', family: 'MaterialCommunityIcons' },
+  { id: 'family', label: 'Famille', icon: 'home-heart', family: 'MaterialCommunityIcons' },
+  { id: 'work', label: 'Travail', icon: 'laptop', family: 'MaterialCommunityIcons' },
+  { id: 'environment', label: 'Environnement', icon: 'earth', family: 'MaterialCommunityIcons' },
   { id: 'other', label: 'Autre', icon: 'dots-horizontal', family: 'MaterialCommunityIcons' },
 ];
 
@@ -96,6 +106,7 @@ const IconComponent = ({ family, name, size, color }) => {
 
 const AddHabitScreen = ({ navigation, route }) => {
   const { addHabit, updateHabit, habits } = useHabits();
+  const { theme } = useTheme();
   
   // Mode édition
   const editMode = route?.params?.editMode || false;
@@ -140,20 +151,20 @@ const AddHabitScreen = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.cancelButton}>Annuler</Text>
+          <Text style={[styles.cancelButton, { color: theme.textSecondary }]}>Annuler</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>{editMode ? 'Modifier l\'habitude' : 'Nouvelle habitude'}</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{editMode ? 'Modifier l\'habitude' : 'Nouvelle habitude'}</Text>
         <TouchableOpacity onPress={handleSubmit}>
-          <Text style={styles.saveButton}>Sauver</Text>
+          <Text style={[styles.saveButton, { color: theme.primary }]}>Sauver</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={styles.label}>Catégorie</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Catégorie</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
             <View style={styles.categoryGrid}>
               {CATEGORIES.map(cat => (
@@ -161,6 +172,7 @@ const AddHabitScreen = ({ navigation, route }) => {
                   key={cat.id}
                   style={[
                     styles.categoryButton,
+                    { backgroundColor: theme.cardBackground },
                     category === cat.id && styles.categoryButtonSelected,
                     category === cat.id && { backgroundColor: selectedColor }
                   ]}
@@ -170,10 +182,11 @@ const AddHabitScreen = ({ navigation, route }) => {
                     family={cat.family}
                     name={cat.icon}
                     size={20}
-                    color={category === cat.id ? '#FFF' : '#666'}
+                    color={category === cat.id ? '#FFF' : theme.textSecondary}
                   />
                   <Text style={[
                     styles.categoryButtonText,
+                    { color: theme.textSecondary },
                     category === cat.id && styles.categoryButtonTextActive
                   ]}>
                     {cat.label}
@@ -185,25 +198,25 @@ const AddHabitScreen = ({ navigation, route }) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Nom de l'habitude</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Nom de l'habitude</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: theme.inputBackground, color: theme.text, borderColor: theme.border }]}
             value={name}
             onChangeText={setName}
             placeholder="Ex: Méditer 10 minutes"
-            placeholderTextColor="#999"
+            placeholderTextColor={theme.textTertiary}
             autoFocus
           />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Description (optionnel)</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Description (optionnel)</Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={[styles.input, styles.textArea, { backgroundColor: theme.inputBackground, color: theme.text, borderColor: theme.border }]}
             value={description}
             onChangeText={setDescription}
             placeholder="Ajoutez des détails sur votre habitude..."
-            placeholderTextColor="#999"
+            placeholderTextColor={theme.textTertiary}
             multiline
             numberOfLines={3}
             textAlignVertical="top"
@@ -211,7 +224,7 @@ const AddHabitScreen = ({ navigation, route }) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Icône</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Icône</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.iconGrid}>
               {ICONS.map((icon) => (
@@ -219,6 +232,7 @@ const AddHabitScreen = ({ navigation, route }) => {
                   key={`${icon.family}-${icon.name}`}
                   style={[
                     styles.iconButton,
+                    { backgroundColor: theme.cardBackground, borderColor: theme.border },
                     selectedIcon === icon && styles.iconButtonSelected,
                     selectedIcon === icon && { borderColor: selectedColor }
                   ]}
@@ -228,7 +242,7 @@ const AddHabitScreen = ({ navigation, route }) => {
                     family={icon.family}
                     name={icon.name}
                     size={24}
-                    color={selectedIcon === icon ? selectedColor : '#666'}
+                    color={selectedIcon === icon ? selectedColor : theme.textSecondary}
                   />
                 </TouchableOpacity>
               ))}
@@ -237,7 +251,7 @@ const AddHabitScreen = ({ navigation, route }) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Couleur</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Couleur</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.colorGrid}>
               {COLORS.map(color => (
@@ -260,13 +274,14 @@ const AddHabitScreen = ({ navigation, route }) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Difficulté</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Difficulté</Text>
           <View style={styles.difficultyButtons}>
             {DIFFICULTY_LEVELS.map(level => (
               <TouchableOpacity
                 key={level.id}
                 style={[
                   styles.difficultyButton,
+                  { backgroundColor: theme.cardBackground, borderColor: theme.border },
                   difficulty === level.id && styles.difficultyButtonActive,
                   difficulty === level.id && { backgroundColor: level.color, borderColor: level.color }
                 ]}
@@ -274,6 +289,7 @@ const AddHabitScreen = ({ navigation, route }) => {
               >
                 <Text style={[
                   styles.difficultyButtonText,
+                  { color: theme.text },
                   difficulty === level.id && styles.difficultyButtonTextActive
                 ]}>
                   {level.label}
@@ -284,11 +300,12 @@ const AddHabitScreen = ({ navigation, route }) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Fréquence</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Fréquence</Text>
           <View style={styles.frequencyButtons}>
             <TouchableOpacity
               style={[
                 styles.frequencyButton,
+                { backgroundColor: theme.cardBackground, borderColor: theme.border },
                 frequency === 'daily' && styles.frequencyButtonActive,
                 frequency === 'daily' && { backgroundColor: selectedColor }
               ]}
@@ -296,6 +313,7 @@ const AddHabitScreen = ({ navigation, route }) => {
             >
               <Text style={[
                 styles.frequencyButtonText,
+                { color: theme.text },
                 frequency === 'daily' && styles.frequencyButtonTextActive
               ]}>
                 Quotidien
@@ -305,6 +323,7 @@ const AddHabitScreen = ({ navigation, route }) => {
             <TouchableOpacity
               style={[
                 styles.frequencyButton,
+                { backgroundColor: theme.cardBackground, borderColor: theme.border },
                 frequency === 'weekly' && styles.frequencyButtonActive,
                 frequency === 'weekly' && { backgroundColor: selectedColor }
               ]}
@@ -312,6 +331,7 @@ const AddHabitScreen = ({ navigation, route }) => {
             >
               <Text style={[
                 styles.frequencyButtonText,
+                { color: theme.text },
                 frequency === 'weekly' && styles.frequencyButtonTextActive
               ]}>
                 Hebdomadaire
@@ -321,35 +341,35 @@ const AddHabitScreen = ({ navigation, route }) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Objectif (jours)</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Objectif (jours)</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: theme.inputBackground, color: theme.text, borderColor: theme.border }]}
             value={targetDays}
             onChangeText={setTargetDays}
             placeholder="Ex: 30"
-            placeholderTextColor="#999"
+            placeholderTextColor={theme.textTertiary}
             keyboardType="numeric"
           />
         </View>
 
         <View style={styles.section}>
-          <View style={styles.reminderRow}>
+          <View style={[styles.reminderRow, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}>
             <View>
-              <Text style={styles.label}>Rappels</Text>
-              <Text style={styles.reminderSubtext}>Recevoir une notification quotidienne</Text>
+              <Text style={[styles.label, { color: theme.text }]}>Rappels</Text>
+              <Text style={[styles.reminderSubtext, { color: theme.textSecondary }]}>Recevoir une notification quotidienne</Text>
             </View>
             <Switch
               value={reminderEnabled}
               onValueChange={setReminderEnabled}
-              trackColor={{ false: '#E0E0E0', true: selectedColor + '60' }}
+              trackColor={{ false: theme.border, true: selectedColor + '60' }}
               thumbColor={reminderEnabled ? selectedColor : '#FFF'}
             />
           </View>
         </View>
 
         <View style={styles.previewSection}>
-          <Text style={styles.label}>Aperçu</Text>
-          <View style={[styles.previewCard, { borderLeftColor: selectedColor }]}>
+          <Text style={[styles.label, { color: theme.text }]}>Aperçu</Text>
+          <View style={[styles.previewCard, { backgroundColor: theme.cardBackground, borderLeftColor: selectedColor }]}>
             <View style={[styles.previewIconContainer, { backgroundColor: selectedColor + '20' }]}>
               <IconComponent 
                 family={selectedIcon.family}
@@ -359,8 +379,8 @@ const AddHabitScreen = ({ navigation, route }) => {
               />
             </View>
             <View style={styles.previewInfo}>
-              <Text style={styles.previewName}>{name || 'Nom de l\'habitude'}</Text>
-              <Text style={styles.previewCategory}>
+              <Text style={[styles.previewName, { color: theme.text }]}>{name || 'Nom de l\'habitude'}</Text>
+              <Text style={[styles.previewCategory, { color: theme.textSecondary }]}>
                 {CATEGORIES.find(c => c.id === category)?.label}
               </Text>
             </View>

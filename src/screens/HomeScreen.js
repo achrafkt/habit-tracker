@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, MaterialCommunityIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { useHabits } from '../contexts/HabitContext';
+import { useTheme } from '../contexts/ThemeContext';
 import dayjs from 'dayjs';
 
 const IconComponent = ({ family, name, size, color }) => {
@@ -29,6 +30,7 @@ const IconComponent = ({ family, name, size, color }) => {
 
 const HomeScreen = ({ navigation }) => {
   const { habits, toggleCompletion, isCompletedToday, getCurrentStreak } = useHabits();
+  const { theme } = useTheme();
 
   const renderHabitItem = ({ item }) => {
     const completed = isCompletedToday(item);
@@ -54,7 +56,7 @@ const HomeScreen = ({ navigation }) => {
 
     return (
       <TouchableOpacity
-        style={styles.habitCard}
+        style={[styles.habitCard, { backgroundColor: theme.cardBackground }]}
         onPress={() => navigation.navigate('Details', { habitId: item.id })}
       >
         <View style={styles.habitLeft}>
@@ -80,21 +82,21 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.habitInfo}>
             <View style={styles.habitHeader}>
               <View style={styles.habitTitleContainer}>
-                <Text style={styles.habitName}>{item.name}</Text>
+                <Text style={[styles.habitName, { color: theme.text }]}>{item.name}</Text>
                 {item.category && (
-                  <Text style={styles.habitCategory}>{item.category}</Text>
+                  <Text style={[styles.habitCategory, { color: theme.textSecondary }]}>{item.category}</Text>
                 )}
               </View>
             </View>
             
             {item.description && (
-              <Text style={styles.habitDescription} numberOfLines={1}>
+              <Text style={[styles.habitDescription, { color: theme.textSecondary }]} numberOfLines={1}>
                 {item.description}
               </Text>
             )}
             
             <View style={styles.habitMeta}>
-              <Text style={styles.habitFrequency}>
+              <Text style={[styles.habitFrequency, { color: theme.textTertiary }]}>
                 {item.frequency === 'daily' ? 'Quotidien' : 'Hebdomadaire'}
               </Text>
               {item.difficulty && (
@@ -119,27 +121,27 @@ const HomeScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar barStyle="dark-content" />
       
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Bonjour!</Text>
-          <Text style={styles.date}>{dayjs().format('DD MMMM YYYY')}</Text>
+          <Text style={[styles.greeting, { color: theme.text }]}>Bonjour!</Text>
+          <Text style={[styles.date, { color: theme.textSecondary }]}>{dayjs().format('DD MMMM YYYY')}</Text>
         </View>
         <TouchableOpacity
-          style={styles.settingsButton}
+          style={[styles.settingsButton, { backgroundColor: theme.surface }]}
           onPress={() => navigation.navigate('Settings')}
         >
-          <Ionicons name="settings-outline" size={24} color="#666" />
+          <Ionicons name="settings-outline" size={24} color={theme.textSecondary} />
         </TouchableOpacity>
       </View>
 
       {habits.length === 0 ? (
         <View style={styles.emptyState}>
-          <MaterialCommunityIcons name="clipboard-text-outline" size={64} color="#CCC" />
-          <Text style={styles.emptyTitle}>Aucune habitude</Text>
-          <Text style={styles.emptyText}>
+          <MaterialCommunityIcons name="clipboard-text-outline" size={64} color={theme.border} />
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>Aucune habitude</Text>
+          <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
             Commencez par ajouter votre première habitude !
           </Text>
         </View>
@@ -154,7 +156,7 @@ const HomeScreen = ({ navigation }) => {
       )}
 
       <TouchableOpacity
-        style={styles.fab}
+        style={[styles.fab, { backgroundColor: theme.primary }]}
         onPress={() => navigation.navigate('AddHabit')}
       >
         <MaterialIcons name="add" size={32} color="#FFF" />

@@ -24,12 +24,14 @@ export const AuthProvider = ({ children }) => {
     try {
       const authenticated = await authService.isAuthenticated();
       if (authenticated) {
+        // Token exists, mark as authenticated immediately
+        setIsAuthenticated(true);
+        
         try {
           const userData = await authService.getCurrentUser();
           setUser(userData);
-          setIsAuthenticated(true);
         } catch (error) {
-          // If token is invalid, clear it, but if backend is unreachable, keep token
+          // If token is invalid (401), clear it
           console.error('Failed to get user data:', error);
           if (error.response?.status === 401) {
             // Token is invalid
@@ -37,10 +39,9 @@ export const AuthProvider = ({ children }) => {
             setIsAuthenticated(false);
             setUser(null);
           } else {
-            // Backend unreachable, work offline
-            console.log('Backend unreachable, working in offline mode');
-            setIsAuthenticated(false);
-            setUser(null);
+            // Backend unreachable, stay authenticated with token
+            console.log('Backend unreachable, working in offline mode - staying authenticated');
+            // Keep isAuthenticated as true, but user data will be null
           }
         }
       }

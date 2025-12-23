@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, MaterialCommunityIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { useHabits } from '../contexts/HabitContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { LineChart } from 'react-native-chart-kit';
 import dayjs from 'dayjs';
 
@@ -38,6 +39,7 @@ const DetailsScreen = ({ route, navigation }) => {
     getLongestStreak,
     getCompletionRate 
   } = useHabits();
+  const { theme, isDark } = useTheme();
 
   const habit = habits.find(h => h.id === habitId);
 
@@ -101,20 +103,20 @@ const DetailsScreen = ({ route, navigation }) => {
   const chartData = getLast7DaysData();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={28} color="#1A1A1A" />
+          <Ionicons name="arrow-back" size={28} color={theme.text} />
         </TouchableOpacity>
         <View style={styles.headerActions}>
           <TouchableOpacity 
             onPress={() => navigation.navigate('AddHabit', { habitId: safeHabit.id, editMode: true })}
             style={styles.editButton}
           >
-            <Ionicons name="create-outline" size={26} color="#4A90E2" />
+            <Ionicons name="create-outline" size={26} color={theme.primary} />
           </TouchableOpacity>
           <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
-            <Ionicons name="trash-outline" size={26} color="#EF4444" />
+            <Ionicons name="trash-outline" size={26} color={theme.danger} />
           </TouchableOpacity>
         </View>
       </View>
@@ -146,34 +148,34 @@ const DetailsScreen = ({ route, navigation }) => {
         </View>
 
         <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{currentStreak}</Text>
-            <Text style={styles.statLabel}>Série actuelle</Text>
+          <View style={[styles.statCard, { backgroundColor: theme.cardBackground }]}>
+            <Text style={[styles.statValue, { color: theme.text }]}>{currentStreak}</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Série actuelle</Text>
             <View style={styles.statIconContainer}>
               <MaterialCommunityIcons name="fire" size={32} color="#FF6B35" />
             </View>
           </View>
 
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{longestStreak}</Text>
-            <Text style={styles.statLabel}>Record</Text>
+          <View style={[styles.statCard, { backgroundColor: theme.cardBackground }]}>
+            <Text style={[styles.statValue, { color: theme.text }]}>{longestStreak}</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Record</Text>
             <View style={styles.statIconContainer}>
               <MaterialCommunityIcons name="trophy" size={32} color="#FFD700" />
             </View>
           </View>
 
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{completionRate}%</Text>
-            <Text style={styles.statLabel}>30 jours</Text>
+          <View style={[styles.statCard, { backgroundColor: theme.cardBackground }]}>
+            <Text style={[styles.statValue, { color: theme.text }]}>{completionRate}%</Text>
+            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>30 jours</Text>
             <View style={styles.statIconContainer}>
-              <MaterialCommunityIcons name="chart-line" size={32} color="#4A90E2" />
+              <MaterialCommunityIcons name="chart-line" size={32} color={theme.primary} />
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Progression (7 derniers jours)</Text>
-          <View style={styles.chartContainer}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Progression (7 derniers jours)</Text>
+          <View style={[styles.chartContainer, { backgroundColor: theme.cardBackground }]}>
             <LineChart
               data={{
                 labels: chartData.labels,
@@ -184,12 +186,12 @@ const DetailsScreen = ({ route, navigation }) => {
               width={Dimensions.get('window').width - 60}
               height={200}
               chartConfig={{
-                backgroundColor: '#FFF',
-                backgroundGradientFrom: '#FFF',
-                backgroundGradientTo: '#FFF',
+                backgroundColor: theme.cardBackground,
+                backgroundGradientFrom: theme.cardBackground,
+                backgroundGradientTo: theme.cardBackground,
                 decimalPlaces: 0,
                 color: (opacity = 1) => safeHabit.color,
-                labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                labelColor: (opacity = 1) => isDark ? `rgba(255, 255, 255, ${opacity * 0.8})` : `rgba(0, 0, 0, ${opacity})`,
                 style: {
                   borderRadius: 16,
                 },
@@ -206,23 +208,23 @@ const DetailsScreen = ({ route, navigation }) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informations</Text>
-          <View style={styles.infoCard}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Informations</Text>
+          <View style={[styles.infoCard, { backgroundColor: theme.cardBackground }]}>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Date de création</Text>
-              <Text style={styles.infoValue}>
+              <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Date de création</Text>
+              <Text style={[styles.infoValue, { color: theme.text }]}>
                 {dayjs(safeHabit.created_at || safeHabit.createdAt).format('DD MMMM YYYY')}
               </Text>
             </View>
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Total de complétions</Text>
-              <Text style={styles.infoValue}>{safeHabit.completions.length}</Text>
+              <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Total de complétions</Text>
+              <Text style={[styles.infoValue, { color: theme.text }]}>{safeHabit.completions.length}</Text>
             </View>
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Dernière complétion</Text>
-              <Text style={styles.infoValue}>
+              <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Dernière complétion</Text>
+              <Text style={[styles.infoValue, { color: theme.text }]}>
                 {safeHabit.completions.length > 0
                   ? dayjs(safeHabit.completions[safeHabit.completions.length - 1].completed_at || safeHabit.completions[safeHabit.completions.length - 1]).format('DD/MM/YYYY')
                   : 'Jamais'}

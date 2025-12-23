@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,16 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const SettingsScreen = ({ navigation }) => {
   const { user, logout, isAuthenticated } = useAuth();
+  const { theme, themeMode, setTheme } = useTheme();
+  const [themeModalVisible, setThemeModalVisible] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(
@@ -38,43 +42,143 @@ const SettingsScreen = ({ navigation }) => {
     );
   };
 
+  const getThemeLabel = () => {
+    switch (themeMode) {
+      case 'light':
+        return 'Light';
+      case 'dark':
+        return 'Dark';
+      case 'auto':
+        return 'Automatic';
+      default:
+        return 'Light';
+    }
+  };
+
+  const ThemeModal = () => (
+    <Modal
+      visible={themeModalVisible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setThemeModalVisible(false)}
+    >
+      <TouchableOpacity 
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setThemeModalVisible(false)}
+      >
+        <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.modalTitle, { color: theme.text }]}>Choose theme</Text>
+          
+          <TouchableOpacity
+            style={[
+              styles.themeOption,
+              themeMode === 'light' && styles.themeOptionSelected,
+              { borderColor: theme.border }
+            ]}
+            onPress={() => {
+              setTheme('light');
+              setThemeModalVisible(false);
+            }}
+          >
+            <Text style={styles.themeEmoji}>☀️</Text>
+            <View style={styles.themeOptionText}>
+              <Text style={[styles.themeOptionTitle, { color: theme.text }]}>Light</Text>
+              <Text style={[styles.themeOptionSubtitle, { color: theme.textSecondary }]}>
+                Clear and bright
+              </Text>
+            </View>
+            {themeMode === 'light' && <Text style={styles.checkmark}>✓</Text>}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.themeOption,
+              themeMode === 'dark' && styles.themeOptionSelected,
+              { borderColor: theme.border }
+            ]}
+            onPress={() => {
+              setTheme('dark');
+              setThemeModalVisible(false);
+            }}
+          >
+            <Text style={styles.themeEmoji}>🌙</Text>
+            <View style={styles.themeOptionText}>
+              <Text style={[styles.themeOptionTitle, { color: theme.text }]}>Dark</Text>
+              <Text style={[styles.themeOptionSubtitle, { color: theme.textSecondary }]}>
+                Easy on the eyes
+              </Text>
+            </View>
+            {themeMode === 'dark' && <Text style={styles.checkmark}>✓</Text>}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.themeOption,
+              themeMode === 'auto' && styles.themeOptionSelected,
+              { borderColor: theme.border }
+            ]}
+            onPress={() => {
+              setTheme('auto');
+              setThemeModalVisible(false);
+            }}
+          >
+            <Text style={styles.themeEmoji}>⚙️</Text>
+            <View style={styles.themeOptionText}>
+              <Text style={[styles.themeOptionTitle, { color: theme.text }]}>Automatic</Text>
+              <Text style={[styles.themeOptionSubtitle, { color: theme.textSecondary }]}>
+                Follows system settings
+              </Text>
+            </View>
+            {themeMode === 'auto' && <Text style={styles.checkmark}>✓</Text>}
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+
   const SettingItem = ({ icon, title, subtitle, onPress, danger = false }) => (
     <TouchableOpacity style={styles.settingItem} onPress={onPress}>
       <View style={styles.settingLeft}>
         <Text style={styles.settingIcon}>{icon}</Text>
         <View>
-          <Text style={[styles.settingTitle, danger && styles.dangerText]}>
+          <Text style={[
+            styles.settingTitle, 
+            { color: theme.text },
+            danger && { color: theme.danger }
+          ]}>
             {title}
           </Text>
-          {subtitle && <Text style={styles.settingSubtitle}>{subtitle}</Text>}
+          {subtitle && <Text style={[styles.settingSubtitle, { color: theme.textTertiary }]}>{subtitle}</Text>}
         </View>
       </View>
-      <Text style={styles.chevron}>›</Text>
+      <Text style={[styles.chevron, { color: theme.border }]}>›</Text>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <ThemeModal />
+      <View style={[styles.header, { backgroundColor: theme.headerBackground }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>←</Text>
+          <Text style={[styles.backButton, { color: theme.text }]}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Paramètres</Text>
+        <Text style={[styles.title, { color: theme.text }]}>Paramètres</Text>
         <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {isAuthenticated ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Account</Text>
-            <View style={styles.settingsGroup}>
+            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Account</Text>
+            <View style={[styles.settingsGroup, { backgroundColor: theme.cardBackground }]}>
               <View style={styles.settingItem}>
                 <View style={styles.settingLeft}>
                   <Text style={styles.settingIcon}>👤</Text>
                   <View>
-                    <Text style={styles.settingTitle}>Profile</Text>
-                    <Text style={styles.settingSubtitle}>{user?.name}</Text>
-                    <Text style={styles.settingSubtitle}>{user?.email}</Text>
+                    <Text style={[styles.settingTitle, { color: theme.text }]}>Profile</Text>
+                    <Text style={[styles.settingSubtitle, { color: theme.textTertiary }]}>{user?.name}</Text>
+                    <Text style={[styles.settingSubtitle, { color: theme.textTertiary }]}>{user?.email}</Text>
                   </View>
                 </View>
               </View>
@@ -82,15 +186,15 @@ const SettingsScreen = ({ navigation }) => {
           </View>
         ) : (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Account</Text>
-            <View style={styles.settingsGroup}>
+            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Account</Text>
+            <View style={[styles.settingsGroup, { backgroundColor: theme.cardBackground }]}>
               <SettingItem
                 icon="👤"
                 title="Login"
                 subtitle="Connect to sync your habits"
                 onPress={() => navigation.navigate('Login')}
               />
-              <View style={styles.divider} />
+              <View style={[styles.divider, { backgroundColor: theme.border }]} />
               <SettingItem
                 icon="✨"
                 title="Register"
@@ -102,41 +206,41 @@ const SettingsScreen = ({ navigation }) => {
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>General</Text>
-          <View style={styles.settingsGroup}>
+          <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>General</Text>
+          <View style={[styles.settingsGroup, { backgroundColor: theme.cardBackground }]}>
             <SettingItem
               icon="🔔"
               title="Notifications"
               subtitle="Manage daily reminders"
               onPress={() => Alert.alert('Info', 'Feature in development')}
             />
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
             <SettingItem
               icon="🌙"
               title="Theme"
-              subtitle="Light, dark or automatic"
-              onPress={() => Alert.alert('Info', 'Feature in development')}
+              subtitle={getThemeLabel()}
+              onPress={() => setThemeModalVisible(true)}
             />
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Support</Text>
-          <View style={styles.settingsGroup}>
+          <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Support</Text>
+          <View style={[styles.settingsGroup, { backgroundColor: theme.cardBackground }]}>
             <SettingItem
               icon="❓"
               title="Help"
               subtitle="Need assistance?"
               onPress={() => Alert.alert('Info', 'Feature in development')}
             />
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
             <SettingItem
               icon="⭐"
               title="Rate the app"
               subtitle="Share your feedback"
               onPress={() => Alert.alert('Thank you!', 'Thank you for your support')}
             />
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
             <SettingItem
               icon="ℹ️"
               title="About"
@@ -148,7 +252,7 @@ const SettingsScreen = ({ navigation }) => {
 
         {isAuthenticated && (
           <View style={styles.section}>
-            <View style={styles.settingsGroup}>
+            <View style={[styles.settingsGroup, { backgroundColor: theme.cardBackground }]}>
               <SettingItem
                 icon="🚪"
                 title="Logout"
@@ -163,7 +267,7 @@ const SettingsScreen = ({ navigation }) => {
         <View style={styles.footer}>
           <Text style={styles.footerText}>Habit Tracker v1.0</Text>
           <Text style={styles.footerSubtext}>
-            Développé avec ❤️ avec React Native
+            Développé avec ❤️ par Achraf Karati
           </Text>
         </View>
       </ScrollView>
@@ -268,6 +372,62 @@ const styles = StyleSheet.create({
   footerSubtext: {
     fontSize: 12,
     color: '#BBB',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '85%',
+    maxWidth: 400,
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  themeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    marginBottom: 12,
+  },
+  themeOptionSelected: {
+    borderColor: '#4A90E2',
+    backgroundColor: 'rgba(74, 144, 226, 0.1)',
+  },
+  themeEmoji: {
+    fontSize: 28,
+    marginRight: 16,
+  },
+  themeOptionText: {
+    flex: 1,
+  },
+  themeOptionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  themeOptionSubtitle: {
+    fontSize: 13,
+  },
+  checkmark: {
+    fontSize: 20,
+    color: '#4A90E2',
+    fontWeight: 'bold',
   },
 });
 

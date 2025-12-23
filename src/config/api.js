@@ -4,7 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 // Change this to your Laravel backend URL
 // For local development on physical device, use your computer's IP address
 // For emulator: Android uses 10.0.2.2, iOS uses localhost
-const API_BASE_URL = 'http://192.168.100.3:8000/api'; // Your WiFi IP address
+const API_BASE_URL = 'http://192.168.100.3:8000/api'; // Use your computer's IP for physical device/Expo Go
 
 console.log('API Base URL:', API_BASE_URL);
 
