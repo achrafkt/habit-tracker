@@ -45,7 +45,7 @@ Une application mobile React Native pour créer, suivre et maintenir vos habitud
 - Node.js (v14 ou supérieur)
 - npm ou yarn
 - Expo CLI
-- Expo Go app (sur votre téléphone) ou émulateur Android/iOS
+- Expo Go app ou émulateur Android/iOS
 
 ### Étapes d'installation
 
@@ -111,25 +111,6 @@ npm run web      # Pour navigateur web
 - Effacer toutes les données
 - À propos
 
-##  Personnalisation
-
-### Icônes Disponibles
-⭐ 💪 📚 🏃 💧 🧘 🎯 ✍️ 🎨 🎵 🌱 💼
-
-### Couleurs Disponibles
-- Bleu (#4A90E2)
-- Rouge (#E94B3C)
-- Vert (#50C878)
-- Orange (#FFB347)
-- Violet (#9B59B6)
-- Turquoise (#1ABC9C)
-- Orange foncé (#E67E22)
-- Bleu clair (#3498DB)
-- Rose (#E91E63)
-- Cyan (#00BCD4)
-- Rouge orangé (#FF5722)
-- Marron (#795548)
-
 ##  Structure du Projet
 
 ```
@@ -148,18 +129,6 @@ habit-tracker/
 ├── app.json                      # Configuration Expo
 └── package.json                  # Dépendances
 ```
-
-##  Fonctionnalités à Venir
-
-- [ ] Notifications de rappel quotidiennes
-- [ ] Mode sombre
-- [ ] Export/Import des données
-- [ ] Widgets pour l'écran d'accueil
-- [ ] Statistiques avancées
-- [ ] Catégories d'habitudes
-- [ ] Objectifs personnalisés
-- [ ] Partage de progression
-- [ ] Synchronisation cloud
 
 
 
