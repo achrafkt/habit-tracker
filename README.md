@@ -142,3 +142,4 @@ Développé avec ❤️ par Achraf Karati
 
 
 **Note** : Cette application fonctionne entièrement hors-ligne et ne nécessite aucune connexion internet après l'installation initiale.
+**Note** : Les captures d’écran de l’application ont été réalisées et sont disponibles dans le dossier `screenshots` .
