@@ -17,6 +17,10 @@ const SettingsScreen = ({ navigation }) => {
   const { theme, themeMode, setTheme } = useTheme();
   const [themeModalVisible, setThemeModalVisible] = useState(false);
 
+  // Debug: log user data
+  console.log('SettingsScreen - isAuthenticated:', isAuthenticated);
+  console.log('SettingsScreen - user:', user);
+
   const handleLogout = () => {
     Alert.alert(
       'Logout',

@@ -29,7 +29,9 @@ export const AuthProvider = ({ children }) => {
         
         try {
           const userData = await authService.getCurrentUser();
-          setUser(userData);
+          // Handle different response formats
+          const user = userData.data || userData.user || userData;
+          setUser(user);
         } catch (error) {
           // If token is invalid (401), clear it
           console.error('Failed to get user data:', error);
@@ -57,7 +59,9 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password) => {
     try {
       const response = await authService.register(name, email, password);
-      setUser(response.user);
+      // Extract user data from response
+      const userData = response.user || response.data?.user || response;
+      setUser(userData);
       setIsAuthenticated(true);
       return { success: true };
     } catch (error) {
@@ -71,8 +75,19 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await authService.login(email, password);
-      setUser(response.user);
+      // Extract user data from response
+      const userData = response.user || response.data?.user || response;
+      setUser(userData);
       setIsAuthenticated(true);
+      
+      // Try to fetch full user profile
+      try {
+        const fullProfile = await authService.getCurrentUser();
+        setUser(fullProfile.data || fullProfile);
+      } catch (profileError) {
+        console.log('Could not fetch full profile, using login data');
+      }
+      
       return { success: true };
     } catch (error) {
       return { 

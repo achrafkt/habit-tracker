@@ -168,6 +168,7 @@ export const HabitProvider = ({ children }) => {
           const apiResponse = await habitService.toggleCompletion(id);
           // API returns completion info, not full habit - need to update locally
           const today = dayjs().format('YYYY-MM-DD');
+          const responseDate = apiResponse.date ? dayjs(apiResponse.date).format('YYYY-MM-DD') : today;
           
           if (apiResponse.completed) {
             // Added completion
@@ -175,7 +176,7 @@ export const HabitProvider = ({ children }) => {
               ...habit,
               completions: [
                 ...(habit.completions || []),
-                apiResponse.completion || { completed_at: today }
+                apiResponse.completion || { completed_at: responseDate }
               ],
             };
           } else {
@@ -183,12 +184,13 @@ export const HabitProvider = ({ children }) => {
             updated = {
               ...habit,
               completions: (habit.completions || []).filter(c => 
-                dayjs(c.completed_at).format('YYYY-MM-DD') !== today
+                dayjs(c.completed_at).format('YYYY-MM-DD') !== responseDate
               ),
             };
           }
         } catch (error) {
           console.error('Error toggling completion on API:', error);
+          console.error('Error details:', error.response?.data || error.message);
           // Fallback to local toggle
           const today = dayjs().format('YYYY-MM-DD');
           const isCompleted = habit.completions?.some(c => 
